@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloudinary Upload Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+    }
+    .success { border-color: #4CAF50; background-color: #f1f8f4; }
+    .error { border-color: #f44336; background-color: #fef1f1; }
+    .info { border-color: #2196F3; background-color: #e3f2fd; }
+    input[type="file"] {
+      margin: 10px 0;
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      width: 100%;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    .log {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .log-item {
+      padding: 5px;
+      margin: 2px 0;
+    }
+    .log-success { color: #4CAF50; }
+    .log-error { color: #f44336; }
+    .log-info { color: #2196F3; }
+    h1 { color: #333; }
+    h2 { color: #555; }
+    img {
+      max-width: 100%;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Cloudinary Upload Test</h1>
+  <p>Use this page to test your Cloudinary configuration independently from your React app.</p>
+
+  <!-- Configuration Check -->
+  <div class="test-section info">
+    <h2>📋 Configuration Check</h2>
+    <p><strong>Cloud Name:</strong> <span id="cloudName">dcnw6lrcq</span></p>
+    <p><strong>Upload Preset:</strong> <span id="uploadPreset">safay_hub_unsigned</span></p>
+    <p><strong>Upload URL:</strong> <span id="uploadUrl">https://api.cloudinary.com/v1_1/dcnw6lrcq/image/upload</span></p>
+    <button onclick="testConfig()">✅ Verify Configuration</button>
+  </div>
+
+  <!-- Upload Test -->
+  <div class="test-section">
+    <h2>📤 Upload Test</h2>
+    <input type="file" id="fileInput" accept="image/*">
+    <div>
+      <button onclick="testBasicUpload()">🚀 Test Basic Upload</button>
+      <button onclick="testWithFolder()">📁 Test Upload with Folder</button>
+    </div>
+    <div id="uploadResult"></div>
+  </div>
+
+  <!-- Logs -->
+  <div class="test-section">
+    <h2>📝 Test Logs</h2>
+    <button onclick="clearLogs()">🗑️ Clear Logs</button>
+    <div id="logs" class="log"></div>
+  </div>
+
+  <script>
+    // Configuration
+    const CLOUD_NAME = 'dcnw6lrcq';
+    const UPLOAD_PRESET = 'safay_hub_unsigned';
+    const UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+
+    // Logging
+    function log(message, type = 'info') {
+      const logsDiv = document.getElementById('logs');
+      const timestamp = new Date().toLocaleTimeString();
+      const logItem = document.createElement('div');
+      logItem.className = `log-item log-${type}`;
+      logItem.textContent = `[${timestamp}] ${message}`;
+      logsDiv.appendChild(logItem);
+      logsDiv.scrollTop = logsDiv.scrollHeight;
+      
+      // Also log to console
+      console.log(`[${type.toUpperCase()}]`, message);
+    }
+
+    function clearLogs() {
+      document.getElementById('logs').innerHTML = '';
+      document.getElementById('uploadResult').innerHTML = '';
+      log('Logs cleared', 'info');
+    }
+
+    // Configuration Test
+    function testConfig() {
+      log('Testing configuration...', 'info');
+      log(`Cloud Name: ${CLOUD_NAME}`, 'info');
+      log(`Upload Preset: ${UPLOAD_PRESET}`, 'info');
+      log(`Upload URL: ${UPLOAD_URL}`, 'info');
+      
+      // Test API reachability
+      fetch(UPLOAD_URL, { method: 'OPTIONS' })
+        .then(() => {
+          log('✅ Cloudinary API is reachable', 'success');
+        })
+        .catch(error => {
+          log(`❌ Cannot reach Cloudinary API: ${error.message}`, 'error');
+        });
+    }
+
+    // Basic Upload Test
+    async function testBasicUpload() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert('Please select an image file first');
+        return;
+      }
+
+      log(`Starting upload test for: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`, 'info');
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', UPLOAD_PRESET);
+
+      try {
+        log('Sending request to Cloudinary...', 'info');
+        const response = await fetch(UPLOAD_URL, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          log('✅ Upload successful!', 'success');
+          log(`Public ID: ${data.public_id}`, 'success');
+          log(`URL: ${data.secure_url}`, 'success');
+          
+          // Display image
+          const resultDiv = document.getElementById('uploadResult');
+          resultDiv.innerHTML = `
+            <div style="margin-top: 20px; padding: 15px; background-color: #f1f8f4; border-radius: 8px;">
+              <h3 style="color: #4CAF50;">✅ Upload Successful!</h3>
+              <p><strong>Public ID:</strong> ${data.public_id}</p>
+              <p><strong>Format:</strong> ${data.format}</p>
+              <p><strong>Size:</strong> ${(data.bytes / 1024).toFixed(2)} KB</p>
+              <p><strong>Dimensions:</strong> ${data.width} x ${data.height}</p>
+              <p><strong>URL:</strong> <a href="${data.secure_url}" target="_blank">View Image</a></p>
+              <img src="${data.secure_url}" alt="Uploaded image" style="max-width: 300px;">
+            </div>
+          `;
+        } else {
+          log('❌ Upload failed!', 'error');
+          log(`Status: ${response.status}`, 'error');
+          log(`Error: ${JSON.stringify(data.error, null, 2)}`, 'error');
+          
+          const resultDiv = document.getElementById('uploadResult');
+          resultDiv.innerHTML = `
+            <div style="margin-top: 20px; padding: 15px; background-color: #fef1f1; border-radius: 8px;">
+              <h3 style="color: #f44336;">❌ Upload Failed</h3>
+              <p><strong>Status:</strong> ${response.status}</p>
+              <p><strong>Error:</strong></p>
+              <pre style="background-color: #fff; padding: 10px; border-radius: 4px; overflow-x: auto;">${JSON.stringify(data.error, null, 2)}</pre>
+              <h4>Common Solutions:</h4>
+              <ul>
+                <li>Verify upload preset "${UPLOAD_PRESET}" exists in Cloudinary Dashboard</li>
+                <li>Ensure preset is set to "Unsigned" signing mode</li>
+                <li>Check that preset name matches exactly (case-sensitive)</li>
+                <li>Try creating a new unsigned upload preset</li>
+              </ul>
+            </div>
+          `;
+        }
+      } catch (error) {
+        log(`❌ Network error: ${error.message}`, 'error');
+        const resultDiv = document.getElementById('uploadResult');
+        resultDiv.innerHTML = `
+          <div style="margin-top: 20px; padding: 15px; background-color: #fef1f1; border-radius: 8px;">
+            <h3 style="color: #f44336;">❌ Network Error</h3>
+            <p><strong>Error:</strong> ${error.message}</p>
+            <p>Check your internet connection and Cloudinary configuration.</p>
+          </div>
+        `;
+      }
+    }
+
+    // Upload with Folder Test
+    async function testWithFolder() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert('Please select an image file first');
+        return;
+      }
+
+      log(`Starting upload test with folder for: ${file.name}`, 'info');
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', UPLOAD_PRESET);
+      formData.append('folder', 'test_uploads');
+
+      try {
+        log('Sending request with folder parameter...', 'info');
+        const response = await fetch(UPLOAD_URL, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          log('✅ Upload with folder successful!', 'success');
+          log(`Public ID: ${data.public_id}`, 'success');
+          log(`Folder: test_uploads`, 'success');
+          
+          const resultDiv = document.getElementById('uploadResult');
+          resultDiv.innerHTML = `
+            <div style="margin-top: 20px; padding: 15px; background-color: #f1f8f4; border-radius: 8px;">
+              <h3 style="color: #4CAF50;">✅ Upload with Folder Successful!</h3>
+              <p><strong>Public ID:</strong> ${data.public_id}</p>
+              <p><strong>Folder:</strong> test_uploads</p>
+              <p><strong>URL:</strong> <a href="${data.secure_url}" target="_blank">View Image</a></p>
+              <img src="${data.secure_url}" alt="Uploaded image" style="max-width: 300px;">
+            </div>
+          `;
+        } else {
+          log('❌ Upload with folder failed!', 'error');
+          log(`Error: ${JSON.stringify(data.error, null, 2)}`, 'error');
+        }
+      } catch (error) {
+        log(`❌ Network error: ${error.message}`, 'error');
+      }
+    }
+
+    // Initialize
+    window.onload = () => {
+      log('Test page loaded', 'info');
+      log('Select an image and click a test button to begin', 'info');
+    };
+  </script>
+</body>
+</html>
