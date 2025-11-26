@@ -11,7 +11,7 @@ import { toast } from "sonner";
 // Fixed credentials
 const FIXED_CREDENTIALS = {
   username: "safaymission@gmail.com",
-  password: "Safay@admin"
+  password: "Safay@123."
 };
 
 const Login = () => {
